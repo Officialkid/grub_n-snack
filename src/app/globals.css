@@ -1,0 +1,24 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme {
+  /* Brand colors — use as bg-brand-orange, text-brand-blue, etc. */
+  --color-brand-orange: #e3720d;
+  --color-brand-blue: #242a41;
+
+  /* Typography */
+  --font-sans: 'Montserrat', sans-serif;
+
+  /* Tailwind defaults pass-through */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}

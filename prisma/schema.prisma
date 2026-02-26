@@ -1,0 +1,92 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  DRIVER
+}
+
+enum OrderStatus {
+  PENDING
+  ACCEPTED
+  PICKED
+  DELIVERED
+  COMPLETED
+  CANCELLED
+  RELEASED
+}
+
+model User {
+  id          String   @id @default(cuid())
+  name        String
+  phone       String   @unique
+  email       String?  @unique
+  password    String
+  role        Role     @default(DRIVER)
+  isActive    Boolean  @default(true)
+  isOnDuty    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  orders      Order[]            @relation("DriverOrders")
+  statusLogs  OrderStatusLog[]
+  pushSubs    PushSubscription[]
+
+  @@map("users")
+}
+
+model Order {
+  id               String      @id @default(cuid())
+  orderNumber      Int         @unique @default(autoincrement())
+  customerName     String
+  customerPhone    String
+  foodItem         String
+  vendorName       String
+  pickupTime       String
+  deliveryLocation String
+  notes            String?
+  status           OrderStatus @default(PENDING)
+  driverId         String?
+  driver           User?       @relation("DriverOrders", fields: [driverId], references: [id])
+  createdAt        DateTime    @default(now())
+  acceptedAt       DateTime?
+  pickedAt         DateTime?
+  deliveredAt      DateTime?
+  completedAt      DateTime?
+  cancelledAt      DateTime?
+  reminderSentAt   DateTime?
+  statusLogs       OrderStatusLog[]
+
+  @@map("orders")
+}
+
+model OrderStatusLog {
+  id         String       @id @default(cuid())
+  orderId    String
+  order      Order        @relation(fields: [orderId], references: [id])
+  changedBy  String?
+  user       User?        @relation(fields: [changedBy], references: [id])
+  fromStatus OrderStatus?
+  toStatus   OrderStatus
+  note       String?
+  createdAt  DateTime     @default(now())
+
+  @@map("order_status_logs")
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  @@map("push_subscriptions")
+}
