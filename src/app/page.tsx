@@ -1,11 +1,11 @@
 import { redirect } from 'next/navigation'
 import { auth } from '@/lib/auth'
 
-export default async function HomePage() {
+export default async function RootPage() {
   const session = await auth()
 
   if (!session) {
-    redirect('/login')
+    redirect('/home')
   }
 
   if (session.user.role === 'ADMIN') {
@@ -16,5 +16,5 @@ export default async function HomePage() {
     redirect('/driver/dashboard')
   }
 
-  redirect('/login')
+  redirect('/home')
 }

@@ -7,10 +7,9 @@ export default auth((req) => {
 
   const isLoggedIn = !!session
   const isAdmin = session?.user?.role === 'ADMIN'
-  const isDriver = session?.user?.role === 'DRIVER'
 
-  // Public routes — always accessible
-  const publicRoutes = ['/login', '/order']
+  // Public routes — always accessible, no auth needed
+  const publicRoutes = ['/home', '/login', '/order']
   const isPublicRoute = publicRoutes.some((route) =>
     pathname.startsWith(route)
   )
@@ -19,19 +18,14 @@ export default auth((req) => {
     return NextResponse.next()
   }
 
-  // Not logged in — redirect to login
+  // Not logged in — send to landing page
   if (!isLoggedIn) {
-    return NextResponse.redirect(new URL('/login', req.url))
+    return NextResponse.redirect(new URL('/home', req.url))
   }
 
   // Driver trying to access admin routes
   if (pathname.startsWith('/admin') && !isAdmin) {
     return NextResponse.redirect(new URL('/driver/dashboard', req.url))
-  }
-
-  // Admin trying to access driver routes
-  if (pathname.startsWith('/driver') && !isDriver && !isAdmin) {
-    return NextResponse.redirect(new URL('/admin/dashboard', req.url))
   }
 
   return NextResponse.next()
