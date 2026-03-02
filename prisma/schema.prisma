@@ -22,16 +22,17 @@ enum OrderStatus {
 }
 
 model User {
-  id          String   @id @default(cuid())
-  name        String
-  phone       String   @unique
-  email       String?  @unique
-  password    String
-  role        Role     @default(DRIVER)
-  isActive    Boolean  @default(true)
-  isOnDuty    Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                 String   @id @default(cuid())
+  name               String
+  phone              String   @unique
+  email              String?  @unique
+  password           String
+  role               Role     @default(DRIVER)
+  isActive           Boolean  @default(true)
+  isOnDuty           Boolean  @default(false)
+  isPendingApproval  Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
   orders      Order[]            @relation("DriverOrders")
   statusLogs  OrderStatusLog[]

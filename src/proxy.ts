@@ -9,7 +9,7 @@ export default auth((req) => {
   const isAdmin = session?.user?.role === 'ADMIN'
 
   // Public routes — always accessible, no auth needed
-  const publicRoutes = ['/home', '/login', '/order']
+  const publicRoutes = ['/home', '/login', '/order', '/signup']
   const isPublicRoute = publicRoutes.some((route) =>
     pathname.startsWith(route)
   )

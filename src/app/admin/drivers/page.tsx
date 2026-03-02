@@ -15,6 +15,13 @@ interface Driver {
   _count: { orders: number }
 }
 
+interface PendingDriver {
+  id: string
+  name: string
+  phone: string
+  createdAt: string
+}
+
 interface CreateDriverForm {
   name: string
   phone: string
@@ -33,17 +40,56 @@ export default function AdminDriversPage() {
   const [formError, setFormError] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [togglingId, setTogglingId] = useState<string | null>(null)
+  const [pendingDrivers, setPendingDrivers] = useState<PendingDriver[]>([])
+  const [approvingId, setApprovingId] = useState<string | null>(null)
+  const [rejectingId, setRejectingId] = useState<string | null>(null)
 
   async function fetchDrivers() {
     setLoading(true)
     try {
-      const res = await fetch('/api/drivers')
-      const data = await res.json()
-      if (data.success) setDrivers(data.drivers)
+      const [driversRes, pendingRes] = await Promise.all([
+        fetch('/api/drivers'),
+        fetch('/api/drivers/pending'),
+      ])
+      const driversData = await driversRes.json()
+      const pendingData = await pendingRes.json()
+      if (driversData.success) setDrivers(driversData.drivers)
+      if (pendingData.success) setPendingDrivers(pendingData.drivers)
     } catch {
       console.error('Failed to fetch drivers')
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function handleApprove(driverId: string) {
+    setApprovingId(driverId)
+    try {
+      const res = await fetch(`/api/drivers/${driverId}/approve`, {
+        method: 'POST',
+      })
+      if (res.ok) await fetchDrivers()
+      else alert('Failed to approve driver')
+    } catch {
+      alert('Network error')
+    } finally {
+      setApprovingId(null)
+    }
+  }
+
+  async function handleReject(driverId: string) {
+    if (!confirm('Reject and delete this driver application?')) return
+    setRejectingId(driverId)
+    try {
+      const res = await fetch(`/api/drivers/${driverId}/approve`, {
+        method: 'DELETE',
+      })
+      if (res.ok) await fetchDrivers()
+      else alert('Failed to reject driver')
+    } catch {
+      alert('Network error')
+    } finally {
+      setRejectingId(null)
     }
   }
 
@@ -128,6 +174,53 @@ export default function AdminDriversPage() {
           Add Driver
         </button>
       </div>
+
+      {/* Pending Approvals */}
+      {pendingDrivers.length > 0 && (
+        <div className="bg-white rounded-xl border-2 border-yellow-200 overflow-hidden">
+          <div className="px-4 py-3 flex items-center gap-2"
+            style={{ backgroundColor: '#fefce8' }}>
+            <span className="text-yellow-600 text-lg">⏳</span>
+            <h2 className="font-bold text-yellow-800 text-sm">
+              Pending Approvals ({pendingDrivers.length})
+            </h2>
+          </div>
+          <div className="divide-y divide-gray-50">
+            {pendingDrivers.map((driver) => (
+              <div key={driver.id}
+                className="px-4 py-3 flex items-center justify-between gap-4">
+                <div>
+                  <p className="font-semibold text-sm"
+                    style={{ color: '#242a41' }}>
+                    {driver.name}
+                  </p>
+                  <p className="text-xs text-gray-400">{driver.phone}</p>
+                  <p className="text-xs text-gray-400">
+                    Applied {new Date(driver.createdAt).toLocaleDateString()}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={() => handleApprove(driver.id)}
+                    disabled={approvingId === driver.id}
+                    className="px-3 py-1.5 rounded-lg text-xs font-bold text-white transition-colors"
+                    style={{ backgroundColor: '#e3720d' }}
+                  >
+                    {approvingId === driver.id ? '...' : 'Approve'}
+                  </button>
+                  <button
+                    onClick={() => handleReject(driver.id)}
+                    disabled={rejectingId === driver.id}
+                    className="px-3 py-1.5 rounded-lg text-xs font-bold text-red-500 bg-red-50 hover:bg-red-100 transition-colors"
+                  >
+                    {rejectingId === driver.id ? '...' : 'Reject'}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Drivers table */}
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">

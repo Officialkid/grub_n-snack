@@ -3,10 +3,11 @@
 import { useState } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 
 export default function LoginPage() {
   const router = useRouter()
-  const [phone, setPhone] = useState('')
+  const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -17,7 +18,7 @@ export default function LoginPage() {
     setError('')
 
     const result = await signIn('credentials', {
-      phone,
+      identifier,
       password,
       redirect: false,
     })
@@ -29,6 +30,8 @@ export default function LoginPage() {
       const errorMessages: Record<string, string> = {
         invalid_credentials: 'Invalid phone number or password.',
         account_deactivated: 'Your account has been deactivated. Contact admin.',
+        pending_approval:
+          'Your account is pending admin approval. You will be notified once approved.',
       }
       setError(errorMessages[code ?? ''] ?? 'Invalid phone number or password.')
       setLoading(false)
@@ -64,13 +67,13 @@ export default function LoginPage() {
           
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Phone Number
+              Phone or Email
             </label>
             <input
-              type="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="e.g. 0712345678"
+              type="text"
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
+              placeholder="Phone number or email address"
               required
               className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-orange"
             />
@@ -106,9 +109,19 @@ export default function LoginPage() {
 
         </form>
 
-        <p className="text-center text-xs text-brand-blue/40 mt-6">
-          Grub N Snack Internal System
-        </p>
+        <div className="text-center mt-6 space-y-2">
+          <p className="text-xs text-gray-400">Grub N Snack Internal System</p>
+          <p className="text-xs text-gray-400">
+            New driver?{' '}
+            <Link
+              href="/signup"
+              className="font-semibold hover:underline"
+              style={{ color: '#e3720d' }}
+            >
+              Apply to join the team
+            </Link>
+          </p>
+        </div>
       </div>
     </main>
   )

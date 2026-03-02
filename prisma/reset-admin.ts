@@ -1,55 +1,63 @@
 /**
- * reset-admin.ts — Update the admin account phone/password.
+ * reset-admin.ts — Set admin credentials for grubnsnack@gmail.com
  * Run with:  npx tsx prisma/reset-admin.ts
- *
- * Edit ADMIN_PHONE / ADMIN_PASSWORD / ADMIN_NAME below before running.
  */
 
 import 'dotenv/config'
 import { PrismaClient } from '@prisma/client'
-import { Pool, neonConfig } from '@neondatabase/serverless'
+import { neonConfig } from '@neondatabase/serverless'
 import { PrismaNeon } from '@prisma/adapter-neon'
 import bcrypt from 'bcryptjs'
 import ws from 'ws'
 
 neonConfig.webSocketConstructor = ws
 
-// ── ✏️  EDIT THESE ────────────────────────────────────────────────────────────
-const NEW_NAME     = 'Grub Admin'
-const NEW_PHONE    = '0700000000'    // ← change to your real phone number
-const NEW_PASSWORD = 'admin123'      // ← change to a strong password
-const NEW_EMAIL    = 'admin@grubnsnack.com'  // ← optional
-// ─────────────────────────────────────────────────────────────────────────────
+const ADMIN_EMAIL    = 'grubnsnack@gmail.com'
+const ADMIN_PASSWORD = '2026@Grubnsnack!'
+const ADMIN_NAME     = 'Grub Admin'
+const ADMIN_PHONE    = '0700000000'
 
 const connectionString = process.env.DATABASE_URL!
 const adapter = new PrismaNeon({ connectionString })
 const prisma = new PrismaClient({ adapter })
 
 async function main() {
-  const hashed = await bcrypt.hash(NEW_PASSWORD, 12)
+  const hashed = await bcrypt.hash(ADMIN_PASSWORD, 12)
 
-  const admin = await prisma.user.upsert({
-    where: { phone: '0700000000' },   // find existing test admin
-    update: {
-      name: NEW_NAME,
-      phone: NEW_PHONE,
-      password: hashed,
-      email: NEW_EMAIL,
-    },
-    create: {
-      name: NEW_NAME,
-      phone: NEW_PHONE,
-      password: hashed,
-      email: NEW_EMAIL,
-      role: 'ADMIN',
-      isActive: true,
-    },
-  })
+  // Try to find existing ADMIN user
+  const existing = await prisma.user.findFirst({ where: { role: 'ADMIN' } })
 
-  console.log('✅  Admin account updated:')
+  let admin
+  if (existing) {
+    admin = await prisma.user.update({
+      where: { id: existing.id },
+      data: {
+        name: ADMIN_NAME,
+        email: ADMIN_EMAIL,
+        password: hashed,
+        isActive: true,
+        isPendingApproval: false,
+      },
+    })
+    console.log('✅  Admin account updated:')
+  } else {
+    admin = await prisma.user.create({
+      data: {
+        name: ADMIN_NAME,
+        email: ADMIN_EMAIL,
+        phone: ADMIN_PHONE,
+        password: hashed,
+        role: 'ADMIN',
+        isActive: true,
+        isPendingApproval: false,
+      },
+    })
+    console.log('✅  Admin account created:')
+  }
+
   console.log(`   Name  : ${admin.name}`)
-  console.log(`   Phone : ${admin.phone}`)
   console.log(`   Email : ${admin.email ?? '—'}`)
+  console.log(`   Phone : ${admin.phone}`)
   console.log(`   Role  : ${admin.role}`)
 }
 

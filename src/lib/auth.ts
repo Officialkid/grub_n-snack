@@ -11,6 +11,10 @@ class AccountDeactivated extends CredentialsSignin {
   code = 'account_deactivated'
 }
 
+class PendingApproval extends CredentialsSignin {
+  code = 'pending_approval'
+}
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   session: {
     strategy: 'jwt',
@@ -42,20 +46,34 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     CredentialsProvider({
       name: 'credentials',
       credentials: {
-        phone: { label: 'Phone', type: 'text' },
+        identifier: { label: 'Phone or Email', type: 'text' },
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
-        if (!credentials?.phone || !credentials?.password) {
+        if (!credentials?.identifier || !credentials?.password) {
           throw new InvalidCredentials()
         }
 
-        const user = await prisma.user.findUnique({
-          where: { phone: credentials.phone as string },
+        const identifier = credentials.identifier as string
+
+        // Look up by email OR phone
+        const user = await prisma.user.findFirst({
+          where: {
+            OR: [
+              { email: identifier },
+              { phone: identifier },
+            ],
+          },
         })
 
         if (!user) {
           throw new InvalidCredentials()
+        }
+
+        if (user.isPendingApproval) {
+          throw new PendingApproval(
+            'Your account is pending admin approval. You will be notified once approved.'
+          )
         }
 
         if (!user.isActive) {
