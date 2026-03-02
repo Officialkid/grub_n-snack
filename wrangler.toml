@@ -1,0 +1,19 @@
+# Wrangler config for Cloudflare Pages + next-on-pages
+# Fill the `account_id` and `project_name` fields before deploying.
+name = "grub-n-snack"
+account_id = "<YOUR_ACCOUNT_ID>"
+compatibility_date = "2026-03-02"
+
+[build]
+command = "npm run build"
+
+# When using `@cloudflare/next-on-pages` the Pages adapter will produce the
+# correct entrypoint. You may need to adjust these values for your setup.
+
+[env]
+# Add per-environment overrides here
+
+# Example production settings (uncomment and fill):
+# [env.production]
+#  account_id = "<YOUR_ACCOUNT_ID>"
+#  route = "https://your-domain.example/*"
